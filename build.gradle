@@ -1,0 +1,60 @@
+plugins {
+  id 'java'
+  id 'eclipse'
+  id 'idea'
+
+  id 'maven-publish'
+
+  id 'fabric-loom' version '1.0-SNAPSHOT'
+}
+
+sourceCompatibility = targetCompatibility = JavaVersion.VERSION_17
+
+repositories {
+  maven {
+    name = 'Terraformers'
+    url  = 'https://maven.terraformersmc.com/releases/'
+  }
+}
+
+dependencies {
+  minecraft "com.mojang:minecraft:${project.minecraft_version}"
+  mappings "net.fabricmc:yarn:${project.minecraft_version}+build.${project.yarn_build}:v2"
+  modApi "net.fabricmc:fabric-loader:${project.loader_version}"
+  modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+}
+
+sourceSets {
+  test {
+    compileClasspath += main.compileClasspath
+    runtimeClasspath += main.runtimeClasspath
+  }
+}
+
+loom {
+  runs {
+    testClient {
+      name "Minecraft Client (Test)"
+      client()
+      source sourceSets.test
+    }
+
+    testServer {
+      name "Minecraft Server (Test)"
+      server()
+      source sourceSets.test
+    }
+  }
+}
+
+processResources {
+  inputs.property "version", project.version
+
+  filesMatching("fabric.mod.json") {
+    expand "version": project.version
+  }
+}
+
+loom {
+  splitEnvironmentSourceSets()
+}
