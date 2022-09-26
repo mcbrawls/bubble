@@ -10,4 +10,4 @@ pluginManagement {
   }
 }
 
-rootProject.name = 'bubble'
+rootProject.name = 'bubble-fabric'

@@ -8,7 +8,16 @@ plugins {
   id 'fabric-loom' version '1.0-SNAPSHOT'
 }
 
+def ENV = System.getenv()
+
 sourceCompatibility = targetCompatibility = JavaVersion.VERSION_17
+tasks.withType(JavaCompile).configureEach { it.options.release = 17 }
+
+String ver = "${project.version_id}+${project.major_version}-fabric"
+version = ENV.GITHUB_ACTIONS ? "${ver}.build.${ENV.GITHUB_RUN_NUMBER}" : ver
+
+archivesBaseName = project.mod_id
+group = project.maven_group
 
 repositories {
   maven {
@@ -58,3 +67,18 @@ processResources {
 loom {
   splitEnvironmentSourceSets()
 }
+
+/* Publishing */
+
+java { withSourcesJar() }
+
+publishing {
+  publications {
+    mavenJava(MavenPublication) {
+      artifact(remapJar) { builtBy remapJar }
+      artifact(sourcesJar) { builtBy remapSourcesJar }
+    }
+  }
+}
+
+loom { disableDeprecatedPomGeneration(publishing.publications.mavenJava) }
