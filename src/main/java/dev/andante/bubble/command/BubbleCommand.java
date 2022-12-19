@@ -19,18 +19,19 @@ public class BubbleCommand {
 
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
         dispatcher.register(
-            literal("bubble")
-                .then(
-                    literal("delete")
+                literal("bubble")
+                        .requires(s -> s.hasPermissionLevel(2))
                         .then(
-                            argument("dimension", TemporaryDimensionArgumentType.dimension())
-                                .executes(BubbleCommand::executeDelete)
+                                literal("add")
+                                        .executes(BubbleCommand::executeAdd)
                         )
-                )
-                .then(
-                    literal("add")
-                        .executes(BubbleCommand::executeAdd)
-                )
+                        .then(
+                                literal("delete")
+                                        .then(
+                                                argument("dimension", TemporaryDimensionArgumentType.dimension())
+                                                        .executes(BubbleCommand::executeDelete)
+                                        )
+                        )
         );
     }
 
