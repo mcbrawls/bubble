@@ -188,17 +188,16 @@ public class BubbleManager {
     }
 
     protected void kickPlayers(TemporaryWorld world) {
-        if (world.getPlayers().isEmpty()) {
+        List<ServerPlayerEntity> players = world.getPlayers();
+        if (players.isEmpty()) {
             return;
         }
 
-        ServerWorld defaultWorld = this.server.getOverworld();
-        BlockPos pos = defaultWorld.getSpawnPos();
-        float spawnAngle = defaultWorld.getSpawnAngle();
-
-        List<ServerPlayerEntity> players = new ArrayList<>(world.getPlayers());
-        for (ServerPlayerEntity player : players) {
-            player.teleport(defaultWorld, pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, spawnAngle, 0.0F);
+        ServerWorld overworld = this.server.getOverworld();
+        BlockPos pos = overworld.getSpawnPos();
+        float angle = overworld.getSpawnAngle();
+        for (ServerPlayerEntity player : new ArrayList<>(players)) {
+            player.teleport(overworld, pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, angle, 0.0F);
         }
     }
 
