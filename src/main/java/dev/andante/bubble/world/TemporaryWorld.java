@@ -1,6 +1,6 @@
-package net.mcdivisions.bubble.world;
+package dev.andante.bubble.world;
 
-import net.mcdivisions.bubble.mixin.MinecraftServerAccessor;
+import dev.andante.bubble.mixin.MinecraftServerAccessor;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;

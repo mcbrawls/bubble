@@ -10,7 +10,9 @@
     "minecraft": ">=1.19"
   },
   "entrypoints": {
-    "main": [ "net.mcdivisions.bubble.Bubble" ]
+    "main": [
+      "dev.andante.bubble.Bubble"
+    ]
   },
   "mixins": [ "bubble.mixins.json" ]
 }

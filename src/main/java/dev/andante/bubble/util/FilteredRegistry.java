@@ -1,4 +1,4 @@
-package net.mcdivisions.bubble.util;
+package dev.andante.bubble.util;
 
 import com.google.common.collect.Iterators;
 import com.mojang.datafixers.util.Pair;

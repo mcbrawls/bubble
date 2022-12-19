@@ -1,11 +1,11 @@
-package net.mcdivisions.bubble;
+package dev.andante.bubble;
 
+import dev.andante.bubble.command.BubbleCommand;
+import dev.andante.bubble.world.VoidChunkGenerator;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.mcdivisions.bubble.command.BubbleCommand;
-import net.mcdivisions.bubble.world.VoidChunkGenerator;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;

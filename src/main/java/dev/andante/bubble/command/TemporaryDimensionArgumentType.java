@@ -1,9 +1,9 @@
-package net.mcdivisions.bubble.command;
+package dev.andante.bubble.command;
 
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.mcdivisions.bubble.world.TemporaryWorld;
+import dev.andante.bubble.world.TemporaryWorld;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.argument.DimensionArgumentType;
 import net.minecraft.registry.RegistryKey;

@@ -1,4 +1,4 @@
-package net.mcdivisions.bubble.util;
+package dev.andante.bubble.util;
 
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;

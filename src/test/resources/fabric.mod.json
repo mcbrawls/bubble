@@ -4,6 +4,8 @@
   "name": "Bubble (Test Mod)",
   "version": "${version}",
   "entrypoints": {
-    "main": [ "net.mcdivisions.bubble.test.BubbleTest" ]
+    "main": [
+      "dev.andante.bubble.test.BubbleTest"
+    ]
   }
 }

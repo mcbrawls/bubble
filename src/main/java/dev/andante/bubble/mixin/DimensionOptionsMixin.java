@@ -1,6 +1,6 @@
-package net.mcdivisions.bubble.mixin;
+package dev.andante.bubble.mixin;
 
-import net.mcdivisions.bubble.world.BubbleDimensionOptionsAccess;
+import dev.andante.bubble.world.BubbleDimensionOptionsAccess;
 import net.minecraft.world.dimension.DimensionOptions;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;

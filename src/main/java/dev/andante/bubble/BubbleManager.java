@@ -1,14 +1,14 @@
-package net.mcdivisions.bubble;
+package dev.andante.bubble;
 
 import com.google.common.base.Preconditions;
 import com.mojang.serialization.Lifecycle;
+import dev.andante.bubble.mixin.MinecraftServerAccessor;
+import dev.andante.bubble.util.DimensionUtil;
+import dev.andante.bubble.util.RemovableSimpleRegistry;
+import dev.andante.bubble.world.BubbleDimensionOptionsAccess;
+import dev.andante.bubble.world.TemporaryWorld;
+import dev.andante.bubble.world.VoidChunkGenerator;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
-import net.mcdivisions.bubble.mixin.MinecraftServerAccessor;
-import net.mcdivisions.bubble.util.DimensionUtil;
-import net.mcdivisions.bubble.util.RemovableSimpleRegistry;
-import net.mcdivisions.bubble.world.BubbleDimensionOptionsAccess;
-import net.mcdivisions.bubble.world.TemporaryWorld;
-import net.mcdivisions.bubble.world.VoidChunkGenerator;
 import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;

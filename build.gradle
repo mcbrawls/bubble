@@ -73,12 +73,33 @@ loom {
 java { withSourcesJar() }
 
 publishing {
+  setupRepositories(repositories)
+
   publications {
     mavenJava(MavenPublication) {
-      artifact(remapJar) { builtBy remapJar }
-      artifact(sourcesJar) { builtBy remapSourcesJar }
+      artifact(remapJar) {
+        builtBy(remapJar)
+      }
+
+      artifact(sourcesJar) {
+        builtBy remapSourcesJar
+      }
     }
   }
 }
 
-loom { disableDeprecatedPomGeneration(publishing.publications.mavenJava) }
+static void setupRepositories(RepositoryHandler repositories) {
+  def ENV = System.getenv()
+  if (ENV.MAVEN_URL) {
+    repositories.maven {
+      url ENV.MAVEN_URL
+      allowInsecureProtocol = true
+      if (ENV.MAVEN_USERNAME) {
+        credentials {
+          username ENV.MAVEN_USERNAME
+          password ENV.MAVEN_PASSWORD
+        }
+      }
+    }
+  }
+}

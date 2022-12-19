@@ -1,4 +1,4 @@
-package net.mcdivisions.bubble.world;
+package dev.andante.bubble.world;
 
 public interface BubbleDimensionOptionsAccess {
     void setShouldSave(boolean shouldSave);

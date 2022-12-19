@@ -1,4 +1,4 @@
-package net.mcdivisions.bubble.mixin;
+package dev.andante.bubble.mixin;
 
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.server.MinecraftServer;

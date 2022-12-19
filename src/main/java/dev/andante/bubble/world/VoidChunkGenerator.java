@@ -1,4 +1,4 @@
-package net.mcdivisions.bubble.world;
+package dev.andante.bubble.world;
 
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;

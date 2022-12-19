@@ -1,10 +1,10 @@
-package net.mcdivisions.bubble.test;
+package dev.andante.bubble.test;
 
 import com.mojang.logging.LogUtils;
+import dev.andante.bubble.world.TemporaryWorld;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.mcdivisions.bubble.BubbleManager;
-import net.mcdivisions.bubble.world.TemporaryWorld;
+import dev.andante.bubble.BubbleManager;
 import org.slf4j.Logger;
 
 public class BubbleTest implements ModInitializer {

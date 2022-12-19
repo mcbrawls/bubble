@@ -1,11 +1,11 @@
-package net.mcdivisions.bubble.command;
+package dev.andante.bubble.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
-import net.mcdivisions.bubble.BubbleManager;
-import net.mcdivisions.bubble.world.TemporaryWorld;
+import dev.andante.bubble.world.TemporaryWorld;
+import dev.andante.bubble.BubbleManager;
 import net.minecraft.command.argument.DimensionArgumentType;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;

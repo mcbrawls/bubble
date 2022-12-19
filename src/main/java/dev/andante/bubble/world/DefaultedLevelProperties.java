@@ -1,4 +1,4 @@
-package net.mcdivisions.bubble.world;
+package dev.andante.bubble.world;
 
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.GameRules;

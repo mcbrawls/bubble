@@ -1,9 +1,9 @@
-package net.mcdivisions.bubble.mixin;
+package dev.andante.bubble.mixin;
 
 import com.mojang.serialization.Lifecycle;
+import dev.andante.bubble.util.RemovableSimpleRegistry;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import net.mcdivisions.bubble.util.RemovableSimpleRegistry;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.SimpleRegistry;
 import net.minecraft.registry.entry.RegistryEntry;
