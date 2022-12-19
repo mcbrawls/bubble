@@ -9,19 +9,20 @@ import net.mcdivisions.bubble.util.RemovableSimpleRegistry;
 import net.mcdivisions.bubble.world.BubbleDimensionOptionsAccess;
 import net.mcdivisions.bubble.world.TemporaryWorld;
 import net.mcdivisions.bubble.world.VoidChunkGenerator;
+import net.minecraft.registry.DynamicRegistryManager;
+import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.SimpleRegistry;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.RegistryKey;
-import net.minecraft.util.registry.SimpleRegistry;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.dimension.DimensionOptions;
-import net.minecraft.world.gen.GeneratorOptions;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.level.storage.LevelStorage;
 import org.apache.commons.io.FileUtils;
@@ -58,7 +59,7 @@ public class BubbleManager {
     }
 
     public TemporaryWorld createAndInitialize(ChunkGenerator chunkGenerator) {
-        RegistryKey<World> key = RegistryKey.of(Registry.WORLD_KEY, this.generateTemporaryWorldKey());
+        RegistryKey<World> key = RegistryKey.of(RegistryKeys.WORLD, this.generateTemporaryWorldKey());
 
         // mark world for removal on close
         try {
@@ -72,7 +73,7 @@ public class BubbleManager {
     }
 
     public TemporaryWorld createAndInitialize() {
-        Registry<Biome> registry = this.server.getRegistryManager().get(Registry.BIOME_KEY);
+        Registry<Biome> registry = this.server.getRegistryManager().get(RegistryKeys.BIOME);
         return this.createAndInitialize(new VoidChunkGenerator(registry));
     }
 
@@ -128,7 +129,7 @@ public class BubbleManager {
         RemovableSimpleRegistry<DimensionOptions> removable = (RemovableSimpleRegistry<DimensionOptions>) dimensionsRegistry;
         boolean wasFrozen = removable.isFrozen();
         removable.setFrozen(false);
-        dimensionsRegistry.add(RegistryKey.of(Registry.DIMENSION_KEY, key.getValue()), options, Lifecycle.stable());
+        dimensionsRegistry.add(RegistryKey.of(RegistryKeys.DIMENSION, key.getValue()), options, Lifecycle.stable());
         removable.setFrozen(wasFrozen);
 
         // create world
@@ -202,7 +203,7 @@ public class BubbleManager {
     }
 
     protected SimpleRegistry<DimensionOptions> getDimensionsRegistry(MinecraftServer server) {
-        GeneratorOptions options = server.getSaveProperties().getGeneratorOptions();
-        return (SimpleRegistry<DimensionOptions>) options.getDimensions();
+        DynamicRegistryManager registryManager = server.getCombinedDynamicRegistries().getCombinedRegistryManager();
+        return (SimpleRegistry<DimensionOptions>) registryManager.get(RegistryKeys.DIMENSION);
     }
 }

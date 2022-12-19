@@ -6,18 +6,19 @@ import com.mojang.serialization.Lifecycle;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.SpawnGroup;
+import net.minecraft.registry.DynamicRegistryManager;
+import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.registry.SimpleRegistry;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.registry.entry.RegistryEntryList;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.structure.StructureSet;
 import net.minecraft.structure.StructureTemplateManager;
 import net.minecraft.util.collection.Pool;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.registry.DynamicRegistryManager;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.RegistryEntry;
-import net.minecraft.util.registry.RegistryEntryList;
-import net.minecraft.util.registry.RegistryKey;
-import net.minecraft.util.registry.SimpleRegistry;
 import net.minecraft.world.ChunkRegion;
 import net.minecraft.world.HeightLimitView;
 import net.minecraft.world.Heightmap;
@@ -33,33 +34,30 @@ import net.minecraft.world.gen.StructureAccessor;
 import net.minecraft.world.gen.chunk.Blender;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.chunk.VerticalBlockSample;
-import net.minecraft.world.gen.chunk.placement.ConcentricRingsStructurePlacement;
+import net.minecraft.world.gen.chunk.placement.StructurePlacementCalculator;
 import net.minecraft.world.gen.noise.NoiseConfig;
 import net.minecraft.world.gen.structure.Structure;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.stream.Stream;
 
 public class VoidChunkGenerator extends ChunkGenerator {
-    public static final Codec<VoidChunkGenerator> CODEC = RecordCodecBuilder.create(instance -> {
-        return instance.group(
-                Biome.REGISTRY_CODEC.stable()
-                                    .fieldOf("biome")
-                                    .forGetter(generator -> generator.biome)
-        ).apply(instance, instance.stable(VoidChunkGenerator::new));
-    });
+    public static final Codec<VoidChunkGenerator> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            Biome.REGISTRY_CODEC.stable()
+                                .fieldOf("biome")
+                                .forGetter(generator -> generator.biome)
+    ).apply(instance, instance.stable(VoidChunkGenerator::new)));
 
     private static final VerticalBlockSample EMPTY_SAMPLE = new VerticalBlockSample(0, new BlockState[0]);
-    private static final Registry<StructureSet> EMPTY_STRUCTURE_REGISTRY = new SimpleRegistry<>(Registry.STRUCTURE_SET_KEY, Lifecycle.stable(), value -> null).freeze();
+    private static final Registry<StructureSet> EMPTY_STRUCTURE_REGISTRY = new SimpleRegistry<>(RegistryKeys.STRUCTURE_SET, Lifecycle.stable(), false).freeze();
 
     private final RegistryEntry<Biome> biome;
 
     public VoidChunkGenerator(RegistryEntry<Biome> biome) {
-        super(EMPTY_STRUCTURE_REGISTRY, Optional.empty(), new FixedBiomeSource(biome));
+        super(new FixedBiomeSource(biome));
         this.biome = biome;
     }
 
@@ -137,22 +135,16 @@ public class VoidChunkGenerator extends ChunkGenerator {
     }
 
     @Override
-    public boolean shouldStructureGenerateInRange(RegistryEntry<StructureSet> structureSet, NoiseConfig config, long seed, int chunkX, int chunkZ, int chunkRange) {
-        return false;
-    }
-
-    @Override
     public Pool<SpawnSettings.SpawnEntry> getEntitySpawnList(RegistryEntry<Biome> biome, StructureAccessor accessor, SpawnGroup group, BlockPos pos) {
         return Pool.empty();
     }
 
     @Override
-    public void setStructureStarts(DynamicRegistryManager dynamicRegistryManager, NoiseConfig config, StructureAccessor structureAccessor, Chunk chunk, StructureTemplateManager structureTemplateManager, long seed) {
+    public void setStructureStarts(DynamicRegistryManager registryManager, StructurePlacementCalculator placementCalculator, StructureAccessor structureAccessor, Chunk chunk, StructureTemplateManager structureTemplateManager) {
     }
 
-    @Nullable
     @Override
-    public List<ChunkPos> getConcentricRingsStartChunks(ConcentricRingsStructurePlacement structurePlacement, NoiseConfig config) {
-        return Collections.emptyList();
+    public StructurePlacementCalculator createStructurePlacementCalculator(RegistryWrapper<StructureSet> structureSetRegistry, NoiseConfig noiseConfig, long seed) {
+        return StructurePlacementCalculator.create(noiseConfig, seed, biomeSource, Stream.empty());
     }
 }

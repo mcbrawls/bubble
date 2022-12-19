@@ -4,10 +4,9 @@
   "name": "Bubble",
   "description": "A library for adding worlds at runtime",
   "version": "${version}",
-  "environment": "*",
+  "environment": "server",
   "depends": {
     "fabricloader": ">=0.14",
-    "java": ">=17",
     "minecraft": ">=1.19"
   },
   "entrypoints": {

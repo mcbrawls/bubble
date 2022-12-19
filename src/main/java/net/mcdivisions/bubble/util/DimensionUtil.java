@@ -1,9 +1,9 @@
 package net.mcdivisions.bubble.util;
 
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.RegistryEntry;
-import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.dimension.DimensionOptions;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
@@ -15,7 +15,7 @@ public interface DimensionUtil {
 
     static RegistryEntry<DimensionType> getRegistryEntry(MinecraftServer server, RegistryKey<DimensionType> type) {
         return server.getRegistryManager()
-                     .get(Registry.DIMENSION_TYPE_KEY)
+                     .get(RegistryKeys.DIMENSION_TYPE)
                      .getEntry(type)
                      .orElseThrow(() -> new IllegalArgumentException("Could not fetch registry entry"));
     }

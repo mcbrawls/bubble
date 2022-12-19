@@ -6,8 +6,8 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.mcdivisions.bubble.world.TemporaryWorld;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.argument.DimensionArgumentType;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.world.World;
 
 import java.util.concurrent.CompletableFuture;
@@ -23,7 +23,7 @@ public class TemporaryDimensionArgumentType extends DimensionArgumentType {
             source.getWorldKeys()
                   .stream()
                   .filter(key -> {
-                      World world = source.getRegistryManager().get(Registry.WORLD_KEY).get(key);
+                      World world = source.getRegistryManager().get(RegistryKeys.WORLD).get(key);
                       return world instanceof TemporaryWorld;
                   })
                   .map(RegistryKey::getValue),

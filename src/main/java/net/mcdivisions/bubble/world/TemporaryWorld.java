@@ -1,11 +1,11 @@
 package net.mcdivisions.bubble.world;
 
 import net.mcdivisions.bubble.mixin.MinecraftServerAccessor;
+import net.minecraft.registry.RegistryKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ProgressListener;
 import net.minecraft.util.Util;
-import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionOptions;
 import org.jetbrains.annotations.Nullable;

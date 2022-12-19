@@ -1,8 +1,8 @@
 package net.mcdivisions.bubble.util;
 
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.SimpleRegistry;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.RegistryKey;
-import net.minecraft.util.registry.SimpleRegistry;
 import net.minecraft.world.World;
 
 @SuppressWarnings("unchecked")

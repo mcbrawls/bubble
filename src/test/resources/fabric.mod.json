@@ -3,7 +3,6 @@
   "id": "bubble-test",
   "name": "Bubble (Test Mod)",
   "version": "${version}",
-  "environment": "*",
   "entrypoints": {
     "main": [ "net.mcdivisions.bubble.test.BubbleTest" ]
   }
