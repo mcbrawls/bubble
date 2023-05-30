@@ -14,7 +14,7 @@ import java.util.Collections;
 
 public class TemporaryWorld extends ServerWorld {
     public TemporaryWorld(MinecraftServer server, RegistryKey<World> worldRegistryKey, DimensionOptions options) {
-        super(server, Util.getMainWorkerExecutor(), ((MinecraftServerAccessor) server).getSession(), new DefaultedLevelProperties(server.getSaveProperties()), worldRegistryKey, options, EmptyWorldGenerationProgressListener.INSTANCE, false, 0, Collections.emptyList(), false);
+        super(server, Util.getMainWorkerExecutor(), ((MinecraftServerAccessor) server).getSession(), new DefaultedLevelProperties(server.getSaveProperties()), worldRegistryKey, options, EmptyWorldGenerationProgressListener.INSTANCE, false, 0, Collections.emptyList(), false, null);
     }
 
     @Override

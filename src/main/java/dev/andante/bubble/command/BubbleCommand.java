@@ -40,7 +40,7 @@ public class BubbleCommand {
         MinecraftServer server = source.getServer();
         BubbleManager bubbleManager = BubbleManager.getOrCreate(server);
         TemporaryWorld world = bubbleManager.createAndInitialize();
-        source.sendFeedback(Text.literal("Successfully added dimension '%s'".formatted(world.getRegistryKey().getValue())), true);
+        source.sendFeedback(() -> Text.literal("Successfully added dimension '%s'".formatted(world.getRegistryKey().getValue())), true);
         return 1;
     }
 
@@ -51,7 +51,7 @@ public class BubbleCommand {
             MinecraftServer server = source.getServer();
             BubbleManager bubbleManager = BubbleManager.getOrCreate(server);
             bubbleManager.scheduleDelete(temporaryWorld);
-            source.sendFeedback(Text.literal("Successfully deleted dimension '%s'".formatted(temporaryWorld.getRegistryKey().getValue())), true);
+            source.sendFeedback(() -> Text.literal("Successfully deleted dimension '%s'".formatted(temporaryWorld.getRegistryKey().getValue())), true);
             return 1;
         } else {
             throw INVALID_DIMENSION_EXCEPTION.create(world.getRegistryKey().getValue());
