@@ -17,6 +17,9 @@ import org.spongepowered.asm.mixin.Unique;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Adds support for modifying frozen registries.
+ */
 @Mixin(SimpleRegistry.class)
 public abstract class SimpleRegistryMixin<T> implements RemovableSimpleRegistry<T> {
     @Shadow @Final private Map<T, RegistryEntry.Reference<T>> valueToEntry;

@@ -5,7 +5,6 @@ import com.mojang.serialization.Lifecycle;
 import dev.andante.bubble.mixin.MinecraftServerAccessor;
 import dev.andante.bubble.util.DimensionUtil;
 import dev.andante.bubble.util.RemovableSimpleRegistry;
-import dev.andante.bubble.world.BubbleDimensionOptionsAccess;
 import dev.andante.bubble.world.TemporaryWorld;
 import dev.andante.bubble.world.VoidChunkGenerator;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
@@ -122,7 +121,6 @@ public class BubbleManager {
     protected TemporaryWorld add(RegistryKey<World> key, ChunkGenerator chunkGenerator) {
         // create options
         DimensionOptions options = DimensionUtil.createDimensionOptions(this.server, Bubble.DEFAULT_DIMENSION_TYPE, chunkGenerator);
-        ((BubbleDimensionOptionsAccess) (Object) options).setShouldSave(false);
 
         // registry stuff
         SimpleRegistry<DimensionOptions> dimensionsRegistry = this.getDimensionsRegistry(this.server);
