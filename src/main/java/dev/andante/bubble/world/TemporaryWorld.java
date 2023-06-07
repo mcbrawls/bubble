@@ -8,7 +8,6 @@ import net.minecraft.util.ProgressListener;
 import net.minecraft.util.Util;
 import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionOptions;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 
@@ -18,11 +17,6 @@ public class TemporaryWorld extends ServerWorld {
     }
 
     @Override
-    public void save(@Nullable ProgressListener listener, boolean flush, boolean enabled) {
-        if (flush) {
-            return;
-        }
-
-        super.save(listener, flush, enabled);
+    public void save(ProgressListener listener, boolean flush, boolean savingDisabled) {
     }
 }
