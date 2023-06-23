@@ -1,13 +1,14 @@
 package dev.andante.bubble.mixin;
 
 import com.mojang.serialization.Lifecycle;
-import dev.andante.bubble.util.RemovableSimpleRegistry;
+import dev.andante.bubble.registry.RemovableSimpleRegistry;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.SimpleRegistry;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -63,7 +64,7 @@ public abstract class SimpleRegistryMixin<T> implements RemovableSimpleRegistry<
 
     @Unique
     @Override
-    public boolean remove(Identifier id) {
+    public boolean remove(@NotNull Identifier id) {
         RegistryEntry.Reference<T> entry = this.idToEntry.get(id);
         return entry != null && entry.hasKeyAndValue() && this.remove(entry.value());
     }

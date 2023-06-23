@@ -1,29 +1,15 @@
-package dev.andante.bubble.world;
+package dev.andante.bubble.world.property
 
-import net.minecraft.server.WorldGenerationProgressListener;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.chunk.ChunkStatus;
-import org.jetbrains.annotations.Nullable;
+import net.minecraft.server.WorldGenerationProgressListener
+import net.minecraft.util.math.ChunkPos
+import net.minecraft.world.chunk.ChunkStatus
 
-public class EmptyWorldGenerationProgressListener implements WorldGenerationProgressListener {
-    public static final EmptyWorldGenerationProgressListener INSTANCE = new EmptyWorldGenerationProgressListener();
-
-    private EmptyWorldGenerationProgressListener() {
-    }
-
-    @Override
-    public void start(ChunkPos spawnPos) {
-    }
-
-    @Override
-    public void setChunkStatus(ChunkPos pos, @Nullable ChunkStatus status) {
-    }
-
-    @Override
-    public void start() {
-    }
-
-    @Override
-    public void stop() {
-    }
+/**
+ * A world generation progress listener with empty methods.
+ */
+object EmptyWorldGenerationProgressListener : WorldGenerationProgressListener {
+    override fun start(spawnPos: ChunkPos) {}
+    override fun setChunkStatus(pos: ChunkPos, status: ChunkStatus?) {}
+    override fun start() {}
+    override fun stop() {}
 }

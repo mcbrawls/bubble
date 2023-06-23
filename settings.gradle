@@ -6,7 +6,10 @@ pluginManagement {
     }
 
     gradlePluginPortal()
-    mavenLocal()
+  }
+
+  plugins {
+    id "org.jetbrains.kotlin.jvm" version kotlin_version
   }
 }
 

@@ -1,206 +1,274 @@
-package dev.andante.bubble;
+package dev.andante.bubble
 
-import com.google.common.base.Preconditions;
-import com.mojang.serialization.Lifecycle;
-import dev.andante.bubble.mixin.MinecraftServerAccessor;
-import dev.andante.bubble.util.DimensionUtil;
-import dev.andante.bubble.util.RemovableSimpleRegistry;
-import dev.andante.bubble.world.TemporaryWorld;
-import dev.andante.bubble.world.VoidChunkGenerator;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.SimpleRegistry;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Util;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.dimension.DimensionOptions;
-import net.minecraft.world.gen.chunk.ChunkGenerator;
-import net.minecraft.world.level.storage.LevelStorage;
-import org.apache.commons.io.FileUtils;
+import com.google.common.base.Preconditions
+import com.mojang.serialization.Lifecycle
+import dev.andante.bubble.registry.RemovableSimpleRegistry
+import dev.andante.bubble.world.BubbleWorld
+import dev.andante.bubble.world.BubbleWorldFactory
+import dev.andante.bubble.world.IBubbleWorld
+import dev.andante.bubble.world.property.VoidChunkGenerator
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents
+import net.minecraft.registry.RegistryKey
+import net.minecraft.registry.RegistryKeys
+import net.minecraft.registry.SimpleRegistry
+import net.minecraft.registry.entry.RegistryEntry
+import net.minecraft.server.MinecraftServer
+import net.minecraft.server.world.ServerWorld
+import net.minecraft.util.Identifier
+import net.minecraft.util.math.Vec3d
+import net.minecraft.world.World
+import net.minecraft.world.dimension.DimensionOptions
+import net.minecraft.world.dimension.DimensionType
+import net.minecraft.world.gen.chunk.ChunkGenerator
+import org.apache.commons.io.FileUtils
+import java.io.IOException
+import java.util.UUID
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.StreamSupport;
-
-public class BubbleManager {
-    private static final Function<MinecraftServer, BubbleManager> MANAGERS = Util.memoize(BubbleManager::new);
-
-    private final MinecraftServer server;
-    private final Set<TemporaryWorld> worldsToDelete;
-
-    private BubbleManager(MinecraftServer server) {
-        this.server = server;
-        this.worldsToDelete = new HashSet<>();
-    }
+/**
+ * Manages Bubble worlds for the given server.
+ */
+class BubbleManager private constructor(private val server: MinecraftServer) {
+    /**
+     * A running queue of the worlds that need to be deleted.
+     */
+    private val worldsToDelete = mutableSetOf<IBubbleWorld>()
 
     /**
-     * Gets an instance of {@link BubbleManager} relevant to the given {@link MinecraftServer},
-     * or creates one if one has not been created yet.
+     * Creates a bubble world from the given parameters and initializes it.
      */
-    public static BubbleManager getOrCreate(MinecraftServer server) {
-        Preconditions.checkState(server.isOnThread(), "Cannot create manager off-thread");
-        return MANAGERS.apply(server);
-    }
+    fun <T : IBubbleWorld> createAndInitialize(
+        /**
+         * The chunk generator to use.
+         */
+        chunkGenerator: ChunkGenerator = run {
+            val registry = server.registryManager[RegistryKeys.BIOME]
+            VoidChunkGenerator(registry)
+        },
 
-    public TemporaryWorld createAndInitialize(ChunkGenerator chunkGenerator) {
-        RegistryKey<World> key = RegistryKey.of(RegistryKeys.WORLD, this.generateTemporaryWorldKey());
+        /**
+         * The unique identifier of the world.
+         */
+        identifier: Identifier = run {
+            val uuid = UUID.randomUUID()
+            Identifier(Bubble.MOD_ID, "temp_world_$uuid")
+        },
 
-        // mark world for removal on close
+        /**
+         * The factory to create the bubble world.
+         */
+        factory: BubbleWorldFactory<T>
+    ): T {
+        val key = RegistryKey.of(RegistryKeys.WORLD, identifier)
+
+        // mark world for file deletion on close
         try {
-            LevelStorage.Session session = ((MinecraftServerAccessor) this.server).getSession();
-            FileUtils.forceDeleteOnExit(session.getWorldDirectory(key).toFile());
-        } catch (IOException ignored) {
+            val session = server.session
+            FileUtils.forceDeleteOnExit(session.getWorldDirectory(key).toFile())
+        } catch (ignored: IOException) {
         }
 
         // add and return
-        return this.add(key, chunkGenerator);
+        val world = create(key, chunkGenerator, factory)
+        return register(world)
     }
 
-    public TemporaryWorld createAndInitialize() {
-        Registry<Biome> registry = this.server.getRegistryManager().get(RegistryKeys.BIOME);
-        return this.createAndInitialize(new VoidChunkGenerator(registry));
+    /**
+     * Creates a bubble world with the default parameters.
+     */
+    fun createAndInitialize(): BubbleWorld {
+        return createAndInitialize(factory = ::BubbleWorld)
     }
 
-    public void scheduleDelete(TemporaryWorld world) {
-        this.server.submit(() -> this.worldsToDelete.add(world));
+    /**
+     * Schedules the given bubble world for removal.
+     */
+    fun remove(world: IBubbleWorld) {
+        server.submit { worldsToDelete.add(world) }
     }
 
-    public Identifier generateTemporaryWorldKey() {
-        return new Identifier(Bubble.MOD_ID, "temp_world_" + UUID.randomUUID());
+    /**
+     * Ticks the bubble manager.
+     */
+    private fun tick() {
+        // try delete worlds
+        worldsToDelete.removeAll(worldsToDelete.filter(::tryDelete).toSet())
     }
 
-    public static void tick(MinecraftServer server) {
-        BubbleManager.getOrCreate(server).tick();
-    }
-
-    public static void onServerStopping(MinecraftServer server) {
-        BubbleManager.getOrCreate(server).onServerStopping();
-    }
-
-    protected void tick() {
-        if (!this.worldsToDelete.isEmpty()) {
-            this.worldsToDelete.removeIf(this::tryDelete);
+    /**
+     * Kicks players from all bubble worlds and deletes the bubble world.
+     */
+    private fun clean() {
+        collectAllWorlds().forEach { world ->
+            kickPlayers(world)
+            delete(world)
         }
     }
 
-    public boolean isWorldUnloaded(ServerWorld world) {
-        return world.getPlayers().isEmpty() && world.getChunkManager().getLoadedChunkCount() <= 0;
+    /**
+     * @return all bubble server worlds from the server
+     */
+    private fun collectAllWorlds(): List<IBubbleWorld> {
+        return server.getWorlds()
+            .filterIsInstance<IBubbleWorld>()
     }
 
-    protected void onServerStopping() {
-        List<TemporaryWorld> worlds = this.collectAll();
-        for (TemporaryWorld world : worlds) {
-            this.kickPlayers(world);
-            this.delete(world);
-        }
+    /**
+     * Creates a bubble world from the given parameters.
+     */
+    private fun <T : IBubbleWorld> create(
+        key: RegistryKey<World>,
+        chunkGenerator: ChunkGenerator,
+        factory: BubbleWorldFactory<T>
+    ): T {
+        val options = DimensionOptions(getRegistryEntry(server, Bubble.DEFAULT_DIMENSION_TYPE), chunkGenerator)
+        return factory.create(server, key, options)
     }
 
-    private List<TemporaryWorld> collectAll() {
-        return StreamSupport.stream(this.server.getWorlds().spliterator(), false)
-                            .filter(world -> world instanceof TemporaryWorld)
-                            .map(world -> (TemporaryWorld) world)
-                            .toList();
-    }
-
-    @SuppressWarnings("unchecked")
-    protected TemporaryWorld add(RegistryKey<World> key, ChunkGenerator chunkGenerator) {
-        // create options
-        DimensionOptions options = DimensionUtil.createDimensionOptions(this.server, Bubble.DEFAULT_DIMENSION_TYPE, chunkGenerator);
+    /**
+     * Registers the given bubble world.
+     */
+    private fun <T : IBubbleWorld> register(world: T): T {
+        val serverWorld = world.asServerWorld()
+        val key = serverWorld.registryKey
 
         // registry stuff
-        SimpleRegistry<DimensionOptions> dimensionsRegistry = this.getDimensionsRegistry(this.server);
-        RemovableSimpleRegistry<DimensionOptions> removable = (RemovableSimpleRegistry<DimensionOptions>) dimensionsRegistry;
-        boolean wasFrozen = removable.isFrozen();
-        removable.setFrozen(false);
-        dimensionsRegistry.add(RegistryKey.of(RegistryKeys.DIMENSION, key.getValue()), options, Lifecycle.stable());
-        removable.setFrozen(wasFrozen);
-
-        // create world
-        TemporaryWorld world = new TemporaryWorld(this.server, key, options);
+        val dimensionsRegistry = getDimensionsRegistry(server)
+        val removable = dimensionsRegistry as RemovableSimpleRegistry<*>
+        val wasFrozen = removable.isFrozen
+        removable.isFrozen = false
+        dimensionsRegistry.add(RegistryKey.of(RegistryKeys.DIMENSION, key.value), world.worldDimensionOptions, Lifecycle.stable())
+        removable.isFrozen = wasFrozen
 
         // add to server worlds
-        Map<RegistryKey<World>, ServerWorld> worlds = ((MinecraftServerAccessor) this.server).getWorlds();
-        worlds.put(key, world);
+        val worlds = server.worlds
+        worlds[key] = serverWorld
 
         // invoke fabric event
-        ServerWorldEvents.LOAD.invoker().onWorldLoad(this.server, world);
+        ServerWorldEvents.LOAD.invoker().onWorldLoad(server, serverWorld)
 
         // pop a tick on the world
-        world.tick(() -> true);
+        serverWorld.tick { true }
 
-        return world;
+        return world
     }
 
-    protected void delete(TemporaryWorld world) {
-        RegistryKey<World> key = world.getRegistryKey();
-        MinecraftServerAccessor accessor = (MinecraftServerAccessor) this.server;
-        if (accessor.getWorlds().remove(key, world)) {
+    /**
+     * @return the entry of the given [type] in the server's registries, or throw
+     */
+    private fun getRegistryEntry(
+        server: MinecraftServer,
+        type: RegistryKey<DimensionType>
+    ): RegistryEntry<DimensionType> {
+        return server.registryManager
+            .get(RegistryKeys.DIMENSION_TYPE)
+            .getEntry(type)
+            .orElseThrow { IllegalArgumentException("Could not fetch registry entry") }
+    }
+
+    /**
+     * Deletes the given bubble world.
+     */
+    private fun delete(world: IBubbleWorld) {
+        val serverWorld = world.asServerWorld()
+        val key = world.worldRegistryKey
+        if (server.worlds.remove(key, serverWorld)) {
             // call fabric event
-            ServerWorldEvents.UNLOAD.invoker().onWorldUnload(this.server, world);
+            ServerWorldEvents.UNLOAD.invoker().onWorldUnload(server, serverWorld)
 
             // remove from registry
-            SimpleRegistry<DimensionOptions> registry = getDimensionsRegistry(this.server);
-            RemovableSimpleRegistry.remove(registry, key);
+            val registry = getDimensionsRegistry(server)
+            RemovableSimpleRegistry.remove(registry, key)
 
             // delete directory
-            LevelStorage.Session session = accessor.getSession();
-            File directory = session.getWorldDirectory(key).toFile();
+            val session = server.session
+            val directory = session.getWorldDirectory(key).toFile()
             if (directory.exists()) {
                 try {
-                    FileUtils.deleteDirectory(directory);
-                } catch (IOException exception) {
-                    Bubble.LOGGER.warn("Failed to delete world directory", exception);
+                    FileUtils.deleteDirectory(directory)
+                } catch (exception: IOException) {
+                    Bubble.LOGGER.warn("Failed to delete world directory", exception)
                     try {
-                        FileUtils.forceDeleteOnExit(directory);
-                    } catch (IOException ignored) {
+                        FileUtils.forceDeleteOnExit(directory)
+                    } catch (ignored: IOException) {
                     }
                 }
             }
         }
     }
 
-    protected boolean tryDelete(TemporaryWorld world) {
-        if (this.isWorldUnloaded(world)) {
-            this.delete(world);
-            return true;
+    /**
+     * Tries to delete the given world. Only succeeds if the world is unloaded.
+     */
+    private fun tryDelete(world: IBubbleWorld): Boolean {
+        return if (isWorldUnloaded(world.asServerWorld())) {
+            delete(world)
+            true
         } else {
-            this.kickPlayers(world);
+            kickPlayers(world)
+            false
         }
-
-        return false;
     }
 
-    protected void kickPlayers(TemporaryWorld world) {
-        List<ServerPlayerEntity> players = world.getPlayers();
+    /**
+     * @return whether the world is unloaded
+     */
+    private fun isWorldUnloaded(world: ServerWorld): Boolean {
+        return world.players.isEmpty() && world.chunkManager.loadedChunkCount <= 0
+    }
+
+    /**
+     * Kicks all players back to the overworld spawn position.
+     */
+    private fun kickPlayers(world: IBubbleWorld) {
+        val players = world.getWorldPlayers()
         if (players.isEmpty()) {
-            return;
+            return
         }
 
-        ServerWorld overworld = this.server.getOverworld();
-        BlockPos pos = overworld.getSpawnPos();
-        float angle = overworld.getSpawnAngle();
-        for (ServerPlayerEntity player : new ArrayList<>(players)) {
-            player.teleport(overworld, pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, angle, 0.0F);
-        }
+        val overworld = server.overworld
+        val spawnPos = overworld.spawnPos
+        val angle = overworld.spawnAngle
+        val pos = Vec3d.ofBottomCenter(spawnPos)
+        players.forEach { player -> player.teleport(overworld, pos.x, pos.y, pos.z, angle, 0.0f) }
     }
 
-    protected SimpleRegistry<DimensionOptions> getDimensionsRegistry(MinecraftServer server) {
-        DynamicRegistryManager registryManager = server.getCombinedDynamicRegistries().getCombinedRegistryManager();
-        return (SimpleRegistry<DimensionOptions>) registryManager.get(RegistryKeys.DIMENSION);
+    /**
+     * Retrieves the dimensions registry from the given [server].
+     */
+    private fun getDimensionsRegistry(server: MinecraftServer): SimpleRegistry<DimensionOptions> {
+        val registryManager = server.combinedDynamicRegistries.combinedRegistryManager
+        return registryManager.get(RegistryKeys.DIMENSION) as SimpleRegistry<DimensionOptions>
+    }
+
+    companion object {
+        /**
+         * All bubble world managers.
+         */
+        private val MANAGERS = mutableMapOf<MinecraftServer, BubbleManager>()
+
+        init {
+            // register server events
+            ServerTickEvents.START_SERVER_TICK.register { MANAGERS[it]?.tick() }
+            ServerLifecycleEvents.SERVER_STOPPING.register { MANAGERS[it]?.clean() }
+        }
+
+        /**
+         * Gets an instance of [BubbleManager] relevant to the given [server],
+         * or creates one if one has not been created yet.
+         */
+        fun getOrCreate(server: MinecraftServer): BubbleManager {
+            Preconditions.checkState(server.isOnThread, "Cannot create manager off-thread")
+            return MANAGERS.computeIfAbsent(server, ::BubbleManager)
+        }
+
+        /**
+         * Clears the instance of [BubbleManager] for the given [server].
+         */
+        fun clear(server: MinecraftServer): BubbleManager? {
+            MANAGERS[server]?.let(BubbleManager::clean)
+            return MANAGERS.remove(server)
+        }
     }
 }

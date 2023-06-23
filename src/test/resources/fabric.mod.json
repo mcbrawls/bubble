@@ -5,7 +5,10 @@
   "version": "${version}",
   "entrypoints": {
     "main": [
-      "dev.andante.bubble.test.BubbleTest"
+      {
+        "adapter": "kotlin",
+        "value": "dev.andante.bubble.test.BubbleTest"
+      }
     ]
   }
 }

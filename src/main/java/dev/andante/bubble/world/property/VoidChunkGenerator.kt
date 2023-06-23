@@ -1,150 +1,152 @@
-package dev.andante.bubble.world;
+package dev.andante.bubble.world.property
 
-import com.mojang.datafixers.util.Pair;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.Lifecycle;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.registry.SimpleRegistry;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.registry.entry.RegistryEntryList;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.structure.StructureSet;
-import net.minecraft.structure.StructureTemplateManager;
-import net.minecraft.util.collection.Pool;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.ChunkRegion;
-import net.minecraft.world.HeightLimitView;
-import net.minecraft.world.Heightmap;
-import net.minecraft.world.StructureWorldAccess;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.BiomeKeys;
-import net.minecraft.world.biome.SpawnSettings;
-import net.minecraft.world.biome.source.BiomeAccess;
-import net.minecraft.world.biome.source.FixedBiomeSource;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.gen.GenerationStep;
-import net.minecraft.world.gen.StructureAccessor;
-import net.minecraft.world.gen.chunk.Blender;
-import net.minecraft.world.gen.chunk.ChunkGenerator;
-import net.minecraft.world.gen.chunk.VerticalBlockSample;
-import net.minecraft.world.gen.chunk.placement.StructurePlacementCalculator;
-import net.minecraft.world.gen.noise.NoiseConfig;
-import net.minecraft.world.gen.structure.Structure;
-import org.jetbrains.annotations.Nullable;
+import com.mojang.datafixers.util.Pair
+import com.mojang.serialization.Codec
+import com.mojang.serialization.codecs.RecordCodecBuilder
+import net.minecraft.entity.SpawnGroup
+import net.minecraft.registry.DynamicRegistryManager
+import net.minecraft.registry.Registry
+import net.minecraft.registry.RegistryKey
+import net.minecraft.registry.RegistryWrapper
+import net.minecraft.registry.entry.RegistryEntry
+import net.minecraft.registry.entry.RegistryEntryList
+import net.minecraft.server.world.ServerWorld
+import net.minecraft.structure.StructureSet
+import net.minecraft.structure.StructureTemplateManager
+import net.minecraft.util.collection.Pool
+import net.minecraft.util.math.BlockPos
+import net.minecraft.world.ChunkRegion
+import net.minecraft.world.HeightLimitView
+import net.minecraft.world.Heightmap
+import net.minecraft.world.StructureWorldAccess
+import net.minecraft.world.biome.Biome
+import net.minecraft.world.biome.BiomeKeys
+import net.minecraft.world.biome.SpawnSettings.SpawnEntry
+import net.minecraft.world.biome.source.BiomeAccess
+import net.minecraft.world.biome.source.FixedBiomeSource
+import net.minecraft.world.chunk.Chunk
+import net.minecraft.world.gen.GenerationStep
+import net.minecraft.world.gen.StructureAccessor
+import net.minecraft.world.gen.chunk.Blender
+import net.minecraft.world.gen.chunk.ChunkGenerator
+import net.minecraft.world.gen.chunk.VerticalBlockSample
+import net.minecraft.world.gen.chunk.placement.StructurePlacementCalculator
+import net.minecraft.world.gen.noise.NoiseConfig
+import net.minecraft.world.gen.structure.Structure
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import java.util.function.Function
+import java.util.stream.Stream
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.stream.Stream;
+class VoidChunkGenerator(private val biome: RegistryEntry<Biome>) : ChunkGenerator(FixedBiomeSource(biome)) {
+    constructor(registry: Registry<Biome>, biome: RegistryKey<Biome> = BiomeKeys.THE_VOID) : this(
+        registry.getEntry(biome).orElseThrow { IllegalArgumentException("Could not fetch biome ${biome.value}") }
+    )
 
-public class VoidChunkGenerator extends ChunkGenerator {
-    public static final Codec<VoidChunkGenerator> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            Biome.REGISTRY_CODEC.stable()
-                                .fieldOf("biome")
-                                .forGetter(generator -> generator.biome)
-    ).apply(instance, instance.stable(VoidChunkGenerator::new)));
-
-    private static final VerticalBlockSample EMPTY_SAMPLE = new VerticalBlockSample(0, new BlockState[0]);
-    private static final Registry<StructureSet> EMPTY_STRUCTURE_REGISTRY = new SimpleRegistry<>(RegistryKeys.STRUCTURE_SET, Lifecycle.stable(), false).freeze();
-
-    private final RegistryEntry<Biome> biome;
-
-    public VoidChunkGenerator(RegistryEntry<Biome> biome) {
-        super(new FixedBiomeSource(biome));
-        this.biome = biome;
+    override fun getCodec(): Codec<out ChunkGenerator> {
+        return CODEC
     }
 
-    public VoidChunkGenerator(Registry<Biome> registry, RegistryKey<Biome> biome) {
-        this(registry.getEntry(biome).orElseThrow(() -> new IllegalArgumentException("Could not fetch biome " + biome.getValue())));
+    override fun carve(
+        region: ChunkRegion,
+        seed: Long,
+        config: NoiseConfig,
+        world: BiomeAccess,
+        structureAccessor: StructureAccessor,
+        chunk: Chunk,
+        step: GenerationStep.Carver
+    ) {
     }
 
-    public VoidChunkGenerator(Registry<Biome> registry) {
-        this(registry, BiomeKeys.THE_VOID);
+    override fun addStructureReferences(world: StructureWorldAccess, accessor: StructureAccessor, chunk: Chunk) {}
+    override fun populateNoise(
+        executor: Executor,
+        blender: Blender,
+        config: NoiseConfig,
+        structureAccessor: StructureAccessor,
+        chunk: Chunk
+    ): CompletableFuture<Chunk> {
+        return CompletableFuture.completedFuture(chunk)
     }
 
-    @Override
-    protected Codec<? extends ChunkGenerator> getCodec() {
-        return CODEC;
+    override fun getSeaLevel(): Int {
+        return 0
     }
 
-    @Override
-    public void carve(ChunkRegion region, long seed, NoiseConfig config, BiomeAccess world, StructureAccessor structureAccessor, Chunk chunk, GenerationStep.Carver step) {
+    override fun getMinimumY(): Int {
+        return 0
     }
 
-    @Override
-    public void addStructureReferences(StructureWorldAccess world, StructureAccessor accessor, Chunk chunk) {
+    override fun getHeight(
+        x: Int,
+        z: Int,
+        heightmap: Heightmap.Type,
+        world: HeightLimitView,
+        config: NoiseConfig
+    ): Int {
+        return 0
     }
 
-    @Override
-    public CompletableFuture<Chunk> populateNoise(Executor executor, Blender blender, NoiseConfig config, StructureAccessor structureAccessor, Chunk chunk) {
-        return CompletableFuture.completedFuture(chunk);
+    override fun getColumnSample(x: Int, z: Int, world: HeightLimitView, config: NoiseConfig): VerticalBlockSample {
+        return EMPTY_SAMPLE
     }
 
-    @Override
-    public int getSeaLevel() {
-        return 0;
+    override fun getDebugHudText(list: List<String>, config: NoiseConfig, pos: BlockPos) {}
+    override fun generateFeatures(world: StructureWorldAccess, chunk: Chunk, structureAccessor: StructureAccessor) {}
+    override fun buildSurface(region: ChunkRegion, structures: StructureAccessor, config: NoiseConfig, chunk: Chunk) {}
+    override fun populateEntities(region: ChunkRegion) {}
+    override fun getWorldHeight(): Int {
+        return 0
     }
 
-    @Override
-    public int getMinimumY() {
-        return 0;
+    override fun locateStructure(
+        world: ServerWorld,
+        structures: RegistryEntryList<Structure>,
+        center: BlockPos,
+        radius: Int,
+        skipReferencedStructures: Boolean
+    ): Pair<BlockPos, RegistryEntry<Structure>>? {
+        return null
     }
 
-    @Override
-    public int getHeight(int x, int z, Heightmap.Type heightmap, HeightLimitView world, NoiseConfig config) {
-        return 0;
+    override fun getEntitySpawnList(
+        biome: RegistryEntry<Biome>,
+        accessor: StructureAccessor,
+        group: SpawnGroup,
+        pos: BlockPos
+    ): Pool<SpawnEntry> {
+        return Pool.empty()
     }
 
-    @Override
-    public VerticalBlockSample getColumnSample(int x, int z, HeightLimitView world, NoiseConfig config) {
-        return EMPTY_SAMPLE;
+    override fun setStructureStarts(
+        registryManager: DynamicRegistryManager,
+        placementCalculator: StructurePlacementCalculator,
+        structureAccessor: StructureAccessor,
+        chunk: Chunk,
+        structureTemplateManager: StructureTemplateManager
+    ) {
     }
 
-    @Override
-    public void getDebugHudText(List<String> list, NoiseConfig config, BlockPos pos) {
+    override fun createStructurePlacementCalculator(
+        structureSetRegistry: RegistryWrapper<StructureSet>,
+        noiseConfig: NoiseConfig,
+        seed: Long
+    ): StructurePlacementCalculator {
+        return StructurePlacementCalculator.create(noiseConfig, seed, biomeSource, Stream.empty())
     }
 
-    @Override
-    public void generateFeatures(StructureWorldAccess world, Chunk chunk, StructureAccessor structureAccessor) {
-    }
+    companion object {
+        val CODEC: Codec<VoidChunkGenerator> = RecordCodecBuilder.create { instance ->
+            instance.group(
+                Biome.REGISTRY_CODEC.stable()
+                    .fieldOf("biome")
+                    .forGetter { generator: VoidChunkGenerator -> generator.biome }
+            ).apply(
+                instance, instance.stable(
+                    Function { biome: RegistryEntry<Biome> -> VoidChunkGenerator(biome) })
+            )
+        }
 
-    @Override
-    public void buildSurface(ChunkRegion region, StructureAccessor structures, NoiseConfig config, Chunk chunk) {
-    }
-
-    @Override
-    public void populateEntities(ChunkRegion region) {
-    }
-
-    @Override
-    public int getWorldHeight() {
-        return 0;
-    }
-
-    @Nullable
-    @Override
-    public Pair<BlockPos, RegistryEntry<Structure>> locateStructure(ServerWorld world, RegistryEntryList<Structure> structures, BlockPos center, int radius, boolean skipReferencedStructures) {
-        return null;
-    }
-
-    @Override
-    public Pool<SpawnSettings.SpawnEntry> getEntitySpawnList(RegistryEntry<Biome> biome, StructureAccessor accessor, SpawnGroup group, BlockPos pos) {
-        return Pool.empty();
-    }
-
-    @Override
-    public void setStructureStarts(DynamicRegistryManager registryManager, StructurePlacementCalculator placementCalculator, StructureAccessor structureAccessor, Chunk chunk, StructureTemplateManager structureTemplateManager) {
-    }
-
-    @Override
-    public StructurePlacementCalculator createStructurePlacementCalculator(RegistryWrapper<StructureSet> structureSetRegistry, NoiseConfig noiseConfig, long seed) {
-        return StructurePlacementCalculator.create(noiseConfig, seed, biomeSource, Stream.empty());
+        private val EMPTY_SAMPLE = VerticalBlockSample(0, arrayOfNulls(0))
     }
 }

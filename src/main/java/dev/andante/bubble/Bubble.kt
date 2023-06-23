@@ -1,38 +1,60 @@
-package dev.andante.bubble;
+package dev.andante.bubble
 
-import dev.andante.bubble.command.BubbleCommand;
-import dev.andante.bubble.world.VoidChunkGenerator;
-import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.dimension.DimensionType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.mojang.brigadier.context.CommandContext
+import com.mojang.brigadier.suggestion.Suggestions
+import com.mojang.brigadier.suggestion.SuggestionsBuilder
+import dev.andante.bubble.command.BubbleCommand
+import dev.andante.bubble.world.BubbleWorld
+import dev.andante.bubble.world.property.VoidChunkGenerator
+import net.fabricmc.api.ModInitializer
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
+import net.minecraft.command.CommandSource
+import net.minecraft.registry.Registries
+import net.minecraft.registry.Registry
+import net.minecraft.registry.RegistryKey
+import net.minecraft.registry.RegistryKeys
+import net.minecraft.server.command.ServerCommandSource
+import net.minecraft.util.Identifier
+import net.minecraft.world.dimension.DimensionType
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import java.util.concurrent.CompletableFuture
 
-public class Bubble implements ModInitializer {
-    public static final String MOD_ID = "bubble";
-    public static final String MOD_NAME = "Bubble";
-    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+/**
+ * The Bubble entry point.
+ */
+object Bubble : ModInitializer {
+    const val MOD_ID = "bubble"
+    const val MOD_NAME = "Bubble"
 
-    public static final RegistryKey<DimensionType> DEFAULT_DIMENSION_TYPE = RegistryKey.of(RegistryKeys.DIMENSION_TYPE, new Identifier(MOD_ID, "default"));
+    val LOGGER: Logger = LoggerFactory.getLogger(MOD_ID)
+    val DEFAULT_DIMENSION_TYPE: RegistryKey<DimensionType> = RegistryKey.of(RegistryKeys.DIMENSION_TYPE, Identifier(MOD_ID, "default"))
 
-    @Override
-    public void onInitialize() {
-        LOGGER.info("Initializing {}", MOD_NAME);
+    override fun onInitialize() {
+        LOGGER.info("Initializing $MOD_NAME")
 
-        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
-            BubbleCommand.register(dispatcher);
-        });
+        // chunk generator
+        Registry.register(Registries.CHUNK_GENERATOR, Identifier(MOD_ID, "void"), VoidChunkGenerator.CODEC)
 
-        Registry.register(Registries.CHUNK_GENERATOR, new Identifier(MOD_ID, "void"), VoidChunkGenerator.CODEC);
+        // initialize
+        BubbleManager
 
-        ServerTickEvents.START_SERVER_TICK.register(BubbleManager::tick);
-        ServerLifecycleEvents.SERVER_STOPPING.register(BubbleManager::onServerStopping);
+        // register commands
+        CommandRegistrationCallback.EVENT.register { dispatcher, _, _ -> BubbleCommand.register(dispatcher) }
+    }
+
+    /**
+     * Suggests bubble worlds to a command context.
+     */
+    fun suggestBubbleDimensions(context: CommandContext<ServerCommandSource>, builder: SuggestionsBuilder): CompletableFuture<Suggestions> {
+        CommandSource.suggestIdentifiers(
+            context.source.server.worlds
+                .filterValues { it is BubbleWorld }
+                .keys
+                .map(RegistryKey<*>::getValue),
+            builder
+        )
+
+        return builder.buildFuture()
     }
 }

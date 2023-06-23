@@ -1,78 +1,47 @@
-package dev.andante.bubble.world;
+package dev.andante.bubble.world.property
 
-import net.minecraft.world.Difficulty;
-import net.minecraft.world.GameRules;
-import net.minecraft.world.SaveProperties;
-import net.minecraft.world.level.UnmodifiableLevelProperties;
+import net.minecraft.world.Difficulty
+import net.minecraft.world.GameRules
+import net.minecraft.world.SaveProperties
+import net.minecraft.world.level.UnmodifiableLevelProperties
 
-public class DefaultedLevelProperties extends UnmodifiableLevelProperties {
-    private final GameRules gameRules = new GameRules();
-
-    public DefaultedLevelProperties(SaveProperties saveProperties) {
-        super(saveProperties, saveProperties.getMainWorldProperties());
+class DefaultedLevelProperties(saveProperties: SaveProperties) : UnmodifiableLevelProperties(saveProperties, saveProperties.mainWorldProperties) {
+    private val gameRules = GameRules()
+    override fun getGameRules(): GameRules {
+        return gameRules
     }
 
-    @Override
-    public GameRules getGameRules() {
-        return this.gameRules;
+    override fun setTimeOfDay(timeOfDay: Long) {}
+    override fun getTimeOfDay(): Long {
+        return 6000
     }
 
-    @Override
-    public void setTimeOfDay(long timeOfDay) {
+    override fun setClearWeatherTime(time: Int) {}
+    override fun getClearWeatherTime(): Int {
+        return 0
     }
 
-    @Override
-    public long getTimeOfDay() {
-        return 6000;
+    override fun setRaining(raining: Boolean) {}
+    override fun isRaining(): Boolean {
+        return false
     }
 
-    @Override
-    public void setClearWeatherTime(int time) {
+    override fun setRainTime(time: Int) {}
+    override fun getRainTime(): Int {
+        return 0
     }
 
-    @Override
-    public int getClearWeatherTime() {
-        return 0;
+    override fun setThundering(thundering: Boolean) {}
+    override fun isThundering(): Boolean {
+        return false
     }
 
-    @Override
-    public void setRaining(boolean raining) {
+    override fun setThunderTime(time: Int) {}
+    override fun getThunderTime(): Int {
+        return 0
     }
 
-    @Override
-    public boolean isRaining() {
-        return false;
-    }
-
-    @Override
-    public void setRainTime(int time) {
-    }
-
-    @Override
-    public int getRainTime() {
-        return 0;
-    }
-
-    @Override
-    public void setThundering(boolean thundering) {
-    }
-
-    @Override
-    public boolean isThundering() {
-        return false;
-    }
-
-    @Override
-    public void setThunderTime(int time) {
-    }
-
-    @Override
-    public int getThunderTime() {
-        return 0;
-    }
-
-    @Override
-    public Difficulty getDifficulty() {
-        return Difficulty.NORMAL;
+    override fun getDifficulty(): Difficulty {
+        return Difficulty.NORMAL
     }
 }

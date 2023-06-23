@@ -1,6 +1,6 @@
 package dev.andante.bubble.mixin;
 
-import dev.andante.bubble.world.TemporaryWorld;
+import dev.andante.bubble.world.BubbleWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.storage.ChunkDataList;
@@ -21,7 +21,7 @@ public class EntityChunkDataAccessMixin {
      */
     @Inject(method = "writeChunkData", at = @At("HEAD"), cancellable = true)
     private void onWriteChunkData(ChunkDataList<Entity> dataList, CallbackInfo ci) {
-        if (this.world instanceof TemporaryWorld) {
+        if (this.world instanceof BubbleWorld) {
             ci.cancel();
         }
     }

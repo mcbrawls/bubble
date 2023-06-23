@@ -1,94 +1,98 @@
-plugins {
-  id 'java'
-  id 'eclipse'
-  id 'idea'
+//file:noinspection All
 
+plugins {
+  id 'java-library'
   id 'maven-publish'
+  id 'idea'
+  id 'org.jetbrains.kotlin.jvm'
 
   id 'fabric-loom' version '1.2-SNAPSHOT'
 }
 
-def ENV = System.getenv()
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
 
-sourceCompatibility = targetCompatibility = JavaVersion.VERSION_17
-tasks.withType(JavaCompile).configureEach { it.options.release = 17 }
+version = mod_version
+group = maven_group
 
-String ver = "${project.version_id}+${project.major_version}-fabric"
-version = ENV.GITHUB_ACTIONS ? "${ver}.build.${ENV.GITHUB_RUN_NUMBER}" : ver
-
-archivesBaseName = project.mod_id
-group = project.maven_group
-
-repositories {
-  maven {
-    name = 'Terraformers'
-    url  = 'https://maven.terraformersmc.com/releases/'
-  }
-}
+compileKotlin.kotlinOptions.jvmTarget = "17"
 
 dependencies {
-  minecraft "com.mojang:minecraft:${project.minecraft_version}"
-  mappings "net.fabricmc:yarn:${project.minecraft_version}+build.${project.yarn_build}:v2"
-  modApi "net.fabricmc:fabric-loader:${project.loader_version}"
-  modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+  minecraft "com.mojang:minecraft:$minecraft_version"
+  mappings "net.fabricmc:yarn:$minecraft_version+build.$yarn_build:v2"
+  modImplementation "net.fabricmc:fabric-loader:$loader_version"
+  modImplementation "net.fabricmc.fabric-api:fabric-api:$fabric_version"
+  include modImplementation ("net.fabricmc:fabric-language-kotlin:$fabric_kotlin_version")
+
+  testImplementation sourceSets.main.output
 }
 
 sourceSets {
-  test {
-    compileClasspath += main.compileClasspath
-    runtimeClasspath += main.runtimeClasspath
-  }
-}
-
-loom {
-  runs {
-    testClient {
-      name "Minecraft Client (Test)"
-      client()
-      source sourceSets.test
-    }
-
-    testServer {
-      name "Minecraft Server (Test)"
-      server()
-      source sourceSets.test
-    }
-  }
+  test
 }
 
 processResources {
-  inputs.property "version", project.version
+  inputs.property "version", version
+  filteringCharset "UTF-8"
 
   filesMatching("fabric.mod.json") {
-    expand "version": project.version
+    expand "version": version
+  }
+
+  doLast {
+    println("Minifying json")
+    def start = System.currentTimeMillis()
+    def minified = 0
+    def bytes = 0
+    fileTree(dir: outputs.files.asPath, include: '**/*.json').each {
+      def oldLength = it.length()
+      it.text = JsonOutput.toJson(new JsonSlurper().parse(it))
+      bytes += oldLength - it.length()
+      minified++
+    }
+    def ms = System.currentTimeMillis() - start
+    println("Minified $minified json files. Saved $bytes bytes. Took $ms ms.")
   }
 }
 
-loom {
-  splitEnvironmentSourceSets()
+tasks.withType(AbstractArchiveTask).configureEach {
+  preserveFileTimestamps = false
+  reproducibleFileOrder = true
 }
 
-/* Publishing */
+loom {
+  accessWidenerPath = file("src/main/resources/${mod_id}.accesswidener")
 
-java { withSourcesJar() }
+  runs {
+    testServer {
+      server()
+
+      name = "Minecraft Server (Test)"
+      source sourceSets.test
+    }
+  }
+}
+
+jar {
+  from("LICENSE") {
+    rename { "${it}_${archivesBaseName}" }
+  }
+}
 
 publishing {
-  setupRepositories(repositories)
-
   publications {
     mavenJava(MavenPublication) {
       artifact(remapJar) {
         builtBy(remapJar)
       }
 
-      artifact(sourcesJar) {
+      artifact(remapSourcesJar) {
         builtBy remapSourcesJar
       }
     }
   }
-}
 
-static void setupRepositories(RepositoryHandler repositories) {
+
   def ENV = System.getenv()
   if (ENV.MAVEN_URL) {
     repositories.maven {
