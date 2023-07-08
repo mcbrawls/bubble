@@ -17,5 +17,6 @@
       }
     ]
   },
+  "accessWidener": "bubble.accesswidener",
   "mixins": [ "bubble.mixins.json" ]
 }
