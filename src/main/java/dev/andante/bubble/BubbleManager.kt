@@ -222,7 +222,7 @@ class BubbleManager private constructor(private val server: MinecraftServer) {
      * Kicks all players back to the overworld spawn position.
      */
     private fun kickPlayers(world: IBubbleWorld) {
-        val players = world.getWorldPlayers()
+        val players = world.getWorldPlayers().toList()
         if (players.isEmpty()) {
             return
         }
