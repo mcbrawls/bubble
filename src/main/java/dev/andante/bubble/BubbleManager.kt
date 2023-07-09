@@ -15,14 +15,12 @@ import net.minecraft.registry.RegistryKeys
 import net.minecraft.registry.SimpleRegistry
 import net.minecraft.registry.entry.RegistryEntry
 import net.minecraft.server.MinecraftServer
-import net.minecraft.server.world.ServerWorld
 import net.minecraft.util.Identifier
 import net.minecraft.util.math.Vec3d
 import net.minecraft.world.World
 import net.minecraft.world.dimension.DimensionOptions
 import net.minecraft.world.dimension.DimensionType
 import net.minecraft.world.gen.chunk.ChunkGenerator
-import org.apache.commons.io.FileUtils
 import java.io.IOException
 import java.util.UUID
 
@@ -65,7 +63,7 @@ class BubbleManager private constructor(private val server: MinecraftServer) {
         // mark world for file deletion on close
         try {
             val session = server.session
-            FileUtils.forceDeleteOnExit(session.getWorldDirectory(key).toFile())
+            session.getWorldDirectory(key).toFile().deleteOnExit()
         } catch (ignored: IOException) {
         }
 
@@ -85,7 +83,7 @@ class BubbleManager private constructor(private val server: MinecraftServer) {
      * Schedules the given bubble world for removal.
      */
     fun remove(world: IBubbleWorld) {
-        server.submit { worldsToDelete.add(world) }
+        worldsToDelete.add(world)
     }
 
     /**
@@ -110,8 +108,7 @@ class BubbleManager private constructor(private val server: MinecraftServer) {
      * @return all bubble server worlds from the server
      */
     private fun collectAllWorlds(): List<IBubbleWorld> {
-        return server.getWorlds()
-            .filterIsInstance<IBubbleWorld>()
+        return server.getWorlds().filterIsInstance<IBubbleWorld>()
     }
 
     /**
@@ -186,13 +183,9 @@ class BubbleManager private constructor(private val server: MinecraftServer) {
             val directory = session.getWorldDirectory(key).toFile()
             if (directory.exists()) {
                 try {
-                    FileUtils.deleteDirectory(directory)
+                    directory.deleteRecursively()
                 } catch (exception: IOException) {
                     Bubble.LOGGER.warn("Failed to delete world directory", exception)
-                    try {
-                        FileUtils.forceDeleteOnExit(directory)
-                    } catch (ignored: IOException) {
-                    }
                 }
             }
         }
@@ -202,20 +195,13 @@ class BubbleManager private constructor(private val server: MinecraftServer) {
      * Tries to delete the given world. Only succeeds if the world is unloaded.
      */
     private fun tryDelete(world: IBubbleWorld): Boolean {
-        return if (isWorldUnloaded(world.asServerWorld())) {
+        return if (world.asServerWorld().players.isEmpty()) {
             delete(world)
             true
         } else {
             kickPlayers(world)
             false
         }
-    }
-
-    /**
-     * @return whether the world is unloaded
-     */
-    private fun isWorldUnloaded(world: ServerWorld): Boolean {
-        return world.players.isEmpty() && world.chunkManager.loadedChunkCount <= 0
     }
 
     /**

@@ -6,6 +6,8 @@
   "mixins": [
     "EntityChunkDataAccessMixin",
     "LevelPropertiesMixin",
+    "MinecraftServerMixin",
+    "ServerChunkManagerMixin",
     "SimpleRegistryMixin"
   ],
   "injectors": {

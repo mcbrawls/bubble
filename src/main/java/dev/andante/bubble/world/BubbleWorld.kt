@@ -31,6 +31,12 @@ open class BubbleWorld(server: MinecraftServer, worldRegistryKey: RegistryKey<Wo
     ), IBubbleWorld {
     override val worldDimensionOptions: DimensionOptions = options
 
+    /**
+     * Disables most saving of the world.
+     */
+    override fun save(listener: ProgressListener?, flush: Boolean, savingDisabled: Boolean) {
+    }
+
     override fun getWorldPlayers(): MutableList<ServerPlayerEntity> {
         return players
     }
@@ -38,9 +44,4 @@ open class BubbleWorld(server: MinecraftServer, worldRegistryKey: RegistryKey<Wo
     override fun asServerWorld(): ServerWorld {
         return this
     }
-
-    /**
-     * Disables most saving of the world.
-     */
-    override fun save(listener: ProgressListener?, flush: Boolean, savingDisabled: Boolean) {}
 }
