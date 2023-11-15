@@ -4,7 +4,7 @@
   "name": "Bubble",
   "description": "A library for adding worlds at runtime",
   "version": "${version}",
-  "environment": "server",
+  "environment": "*",
   "depends": {
     "fabricloader": ">=0.14",
     "minecraft": ">=1.20"

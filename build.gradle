@@ -1,12 +1,12 @@
 //file:noinspection All
 
 plugins {
-  id 'java-library'
-  id 'maven-publish'
-  id 'idea'
-  id 'org.jetbrains.kotlin.jvm'
+    id 'java-library'
+    id 'maven-publish'
+    id 'idea'
+    id 'org.jetbrains.kotlin.jvm'
 
-  id 'fabric-loom' version '1.4-SNAPSHOT'
+    id 'fabric-loom' version '1.4-SNAPSHOT'
 }
 
 import groovy.json.JsonOutput
@@ -18,92 +18,74 @@ group = maven_group
 compileKotlin.kotlinOptions.jvmTarget = "17"
 
 dependencies {
-  minecraft "com.mojang:minecraft:$minecraft_version"
-  mappings "net.fabricmc:yarn:$minecraft_version+build.$yarn_build:v2"
-  modImplementation "net.fabricmc:fabric-loader:$loader_version"
-  modImplementation "net.fabricmc.fabric-api:fabric-api:$fabric_version"
-  include modImplementation ("net.fabricmc:fabric-language-kotlin:$fabric_kotlin_version")
+    minecraft "com.mojang:minecraft:$minecraft_version"
+    mappings "net.fabricmc:yarn:$minecraft_version+build.$yarn_build:v2"
+    modImplementation "net.fabricmc:fabric-loader:$loader_version"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:$fabric_version"
+    include modImplementation ("net.fabricmc:fabric-language-kotlin:$fabric_kotlin_version")
 
-  testImplementation sourceSets.main.output
+    testImplementation sourceSets.main.output
 }
 
 sourceSets {
-  test
+    test
 }
 
 processResources {
-  inputs.property "version", version
-  filteringCharset "UTF-8"
+    inputs.property "version", version
+    filteringCharset "UTF-8"
 
-  filesMatching("fabric.mod.json") {
-    expand "version": version
-  }
-
-  doLast {
-    println("Minifying json")
-    def start = System.currentTimeMillis()
-    def minified = 0
-    def bytes = 0
-    fileTree(dir: outputs.files.asPath, include: '**/*.json').each {
-      def oldLength = it.length()
-      it.text = JsonOutput.toJson(new JsonSlurper().parse(it))
-      bytes += oldLength - it.length()
-      minified++
+    filesMatching("fabric.mod.json") {
+        expand "version": version
     }
-    def ms = System.currentTimeMillis() - start
-    println("Minified $minified json files. Saved $bytes bytes. Took $ms ms.")
-  }
 }
 
 tasks.withType(AbstractArchiveTask).configureEach {
-  preserveFileTimestamps = false
-  reproducibleFileOrder = true
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
 }
 
 loom {
-  accessWidenerPath = file("src/main/resources/${mod_id}.accesswidener")
+    accessWidenerPath = file("src/main/resources/${mod_id}.accesswidener")
 
-  runs {
-    testServer {
-      server()
+    runs {
+        testServer {
+            server()
 
-      name = "Minecraft Server (Test)"
-      source sourceSets.test
+            name = "Minecraft Server (Test)"
+            source sourceSets.test
+        }
     }
-  }
 }
 
 jar {
-  from("LICENSE") {
-    rename { "${it}_${archivesBaseName}" }
-  }
+    from("LICENSE") {
+        rename { "${it}_${archivesBaseName}" }
+    }
 }
 
 publishing {
-  publications {
-    mavenJava(MavenPublication) {
-      artifact(remapJar) {
-        builtBy(remapJar)
-      }
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
 
-      artifact(remapSourcesJar) {
-        builtBy remapSourcesJar
-      }
-    }
-  }
-
-
-  def ENV = System.getenv()
-  if (ENV.MAVEN_URL) {
-    repositories.maven {
-      url ENV.MAVEN_URL
-      allowInsecureProtocol = true
-      if (ENV.MAVEN_USERNAME) {
-        credentials {
-          username ENV.MAVEN_USERNAME
-          password ENV.MAVEN_PASSWORD
+            artifact(sourcesJar) {
+                builtBy remapSourcesJar
+            }
         }
-      }
     }
-  }
+
+    repositories {
+        // Andante's Maven
+        def mavenUsername = ENV["MAVEN_USERNAME_ANDANTE"]
+        def mavenPassword = ENV["MAVEN_PASSWORD_ANDANTE"]
+        if (mavenUsername && mavenPassword) {
+            maven {
+                name = "Andante"
+                url  = "https://maven.andante.dev/releases/"
+                credentials.username = mavenUsername
+                credentials.password = mavenPassword
+            }
+        }
+    }
 }
