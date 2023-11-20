@@ -2,8 +2,8 @@ package dev.andante.bubble.mixin;
 
 import com.mojang.serialization.Lifecycle;
 import dev.andante.bubble.registry.RemovableSimpleRegistry;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.Reference2IntMap;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.SimpleRegistry;
 import net.minecraft.registry.entry.RegistryEntry;
@@ -28,7 +28,7 @@ public abstract class SimpleRegistryMixin<T> implements RemovableSimpleRegistry<
     @Shadow @Final private Map<RegistryKey<T>, RegistryEntry.Reference<T>> keyToEntry;
     @Shadow @Final private Map<T, Lifecycle> entryToLifecycle;
     @Shadow @Final private ObjectList<RegistryEntry.Reference<T>> rawIdToEntry;
-    @Shadow @Final private Object2IntMap<T> entryToRawId;
+    @Shadow @Final private Reference2IntMap<T> entryToRawId;
     @Shadow @Nullable private List<RegistryEntry.Reference<T>> cachedEntries;
 
     @Shadow private boolean frozen;
