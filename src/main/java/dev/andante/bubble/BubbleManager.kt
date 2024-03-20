@@ -1,7 +1,6 @@
 package dev.andante.bubble
 
 import com.google.common.base.Preconditions
-import com.mojang.serialization.Lifecycle
 import dev.andante.bubble.registry.RemovableSimpleRegistry
 import dev.andante.bubble.world.BubbleWorld
 import dev.andante.bubble.world.BubbleWorldFactory
@@ -14,6 +13,7 @@ import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
 import net.minecraft.registry.SimpleRegistry
 import net.minecraft.registry.entry.RegistryEntry
+import net.minecraft.registry.entry.RegistryEntryInfo
 import net.minecraft.server.MinecraftServer
 import net.minecraft.util.Identifier
 import net.minecraft.util.math.Vec3d
@@ -135,7 +135,7 @@ class BubbleManager private constructor(private val server: MinecraftServer) {
         val removable = dimensionsRegistry as RemovableSimpleRegistry<*>
         val wasFrozen = removable.isFrozen
         removable.isFrozen = false
-        dimensionsRegistry.add(RegistryKey.of(RegistryKeys.DIMENSION, key.value), world.worldDimensionOptions, Lifecycle.stable())
+        dimensionsRegistry.add(RegistryKey.of(RegistryKeys.DIMENSION, key.value), world.worldDimensionOptions, RegistryEntryInfo.DEFAULT)
         removable.isFrozen = wasFrozen
 
         // add to server worlds
